@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iamagnus"
+version = "0.1.0"
+description = "Python client for the Magnus Core API: governed AI agents behind an OpenAI-compatible surface"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Magnus" }]
+keywords = ["magnus", "iamagnus", "sdk", "agents", "chat", "llm", "openai-compatible"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+]
+dependencies = ["requests>=2.25"]
+
+[project.urls]
+Homepage = "https://core.iamagnus.com"
+Repository = "https://github.com/MeGrimlock/magnus-python-sdk"
+Issues = "https://github.com/MeGrimlock/magnus-python-sdk/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+magnus-livecheck = "iamagnus.livecheck:main"
+
+[tool.setuptools.packages.find]
+include = ["iamagnus*"]
+
+[tool.setuptools.package-data]
+iamagnus = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: runs against the contract mock, no network",
+    "live: hits a real Magnus deployment; needs MAGNUS_BASE_URL + MAGNUS_API_KEY",
+]

@@ -1,0 +1,3 @@
+include CONTRACT.md SECURITY.md
+recursive-include tests *.py
+global-exclude __pycache__ *.py[cod]

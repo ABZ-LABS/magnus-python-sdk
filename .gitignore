@@ -1,0 +1,26 @@
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.venv/
+venv/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Local secrets — the livecheck reads MAGNUS_API_KEY from the environment
+.env
+.env.*
