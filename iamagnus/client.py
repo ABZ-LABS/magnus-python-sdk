@@ -47,7 +47,7 @@ class MagnusClient:
     """Client for a Magnus deployment.
 
     Args:
-        base_url: the server root, e.g. ``https://api.iamagnus.com``. Not the
+        base_url: the server root, e.g. ``https://app.iamagnus.com``. Not the
             ``/v1`` prefix — the health probe lives outside it.
         api_key: a System API Key or User API Key from the Magnus dashboard.
         user: end-user identifier for multi-tenant attribution, sent as the
@@ -349,12 +349,16 @@ class MagnusClient:
         self, agent_id: str, *, user: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> "Conversation":
-        """Open a thread that carries its ``session_id`` across turns.
+        """Open a thread with an agent for one end user.
 
         Prefer this over :meth:`send_message` with ``history``: the server keeps
-        memory server-side and identifies the thread by session id. Without one,
-        continuity falls back to a time window and is lost silently when it
-        expires.
+        memory server-side and reads only the last user message. A thread is
+        the end user, not resent history: there is one live thread per (API
+        key, ``user``, agent), and it ends after 30 idle minutes. Pass ``user``,
+        or everyone calling through the key shares one thread.
+
+        The conversation sends back the ``session_id`` the server reports, but
+        the server does not let a session id select, resume or reset a thread.
         """
         return Conversation(
             self, agent_id,
@@ -376,11 +380,12 @@ class MagnusClient:
 
 
 class Conversation:
-    """A thread with an agent, identified by its session id.
+    """A thread with an agent for one end user.
 
     The server reads only the last user message and keeps the conversation's
-    memory and state server-side; the thread is the session id, not the
-    history a client resends.
+    memory and state server-side. The thread is (API key, ``user``, agent),
+    not the history a client resends; ``session_id`` reports which session the
+    server ran on.
     """
 
     def __init__(
@@ -443,7 +448,11 @@ class Conversation:
         )
 
     def reset(self) -> None:
-        """Forget the session id, so the next turn opens a new conversation."""
+        """Forget the session id this object holds.
+
+        The server still continues the end user's live thread: a new thread
+        starts after 30 idle minutes, or with a different ``user``.
+        """
         self.session_id = None
         self.session_source = None
 

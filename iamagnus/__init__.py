@@ -2,7 +2,7 @@
 
     from iamagnus import MagnusClient
 
-    with MagnusClient("https://api.iamagnus.com", "magnus_sys_...") as client:
+    with MagnusClient("https://app.iamagnus.com", "magnus_sys_...") as client:
         agent = client.list_agents()[0]["id"]
 
         # A thread. The session id — not resent history — is what continues it.
