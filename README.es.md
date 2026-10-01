@@ -11,7 +11,7 @@ esperan una confirmación, y cada turno deja una traza.
 pip install iamagnus
 ```
 
-Python 3.8+. Una sola dependencia: `requests`. Si `pip install iamagnus` falla,
+Python 3.9+. Una sola dependencia: `requests`. Si `pip install iamagnus` falla,
 el mismo paquete se instala directo desde GitHub: ver
 [Instalar sin PyPI](#instalar-sin-pypi).
 
