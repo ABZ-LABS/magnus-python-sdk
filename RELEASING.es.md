@@ -9,7 +9,7 @@ publishing*): en este repositorio no vive ningún token.
 ## Configuración, una sola vez
 
 1. En PyPI, en *Your account → Publishing*, agrega un **pending trusted
-   publisher**: proyecto `iamagnus`, owner `MeGrimlock`, repositorio
+   publisher**: proyecto `iamagnus`, owner `ABZ-LABS`, repositorio
    `magnus-python-sdk`, workflow `release.yml`, environment `pypi`.
 2. En GitHub, en *Settings → Environments*, crea un environment llamado `pypi`.
    Si exiges un revisor ahí, cada publicación pasa a ser una aprobación de un

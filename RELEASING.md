@@ -9,7 +9,7 @@ this repository.
 ## One-time setup
 
 1. On PyPI, under *Your account → Publishing*, add a **pending trusted
-   publisher**: project `iamagnus`, owner `MeGrimlock`, repository
+   publisher**: project `iamagnus`, owner `ABZ-LABS`, repository
    `magnus-python-sdk`, workflow `release.yml`, environment `pypi`.
 2. On GitHub, under *Settings → Environments*, create an environment named
    `pypi`. Requiring a reviewer there turns every release into a one-click

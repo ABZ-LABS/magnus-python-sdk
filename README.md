@@ -37,19 +37,19 @@ code is the same and so is the import, `from iamagnus import MagnusClient`.
 `git` on the machine:
 
 ```bash
-pip install "iamagnus @ git+https://github.com/MeGrimlock/magnus-python-sdk@v0.1.0"
+pip install "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0"
 ```
 
 The same line works in `requirements.txt`, and other tools take the same URL:
 
 ```text
 # requirements.txt
-iamagnus @ git+https://github.com/MeGrimlock/magnus-python-sdk@v0.1.0
+iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0
 ```
 
 ```bash
-uv add "iamagnus @ git+https://github.com/MeGrimlock/magnus-python-sdk@v0.1.0"
-poetry add "git+https://github.com/MeGrimlock/magnus-python-sdk.git#v0.1.0"
+uv add "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0"
+poetry add "git+https://github.com/ABZ-LABS/magnus-python-sdk.git#v0.1.0"
 ```
 
 Pin a tag, as above, so every build installs the same code. `@main` follows
@@ -59,7 +59,7 @@ the latest commit, which is not a release.
 a wheel once on a machine that has access, and ship the file with the project:
 
 ```bash
-git clone --branch v0.1.0 https://github.com/MeGrimlock/magnus-python-sdk
+git clone --branch v0.1.0 https://github.com/ABZ-LABS/magnus-python-sdk
 pip wheel ./magnus-python-sdk --no-deps -w vendor/
 # vendor/iamagnus-0.1.0-py3-none-any.whl goes into the project
 
