@@ -128,3 +128,76 @@ class TestHandoff:
         chat = client.conversation("magnus_standard")
         chat.send("Hola")
         assert chat.handoff is False
+
+
+@pytest.mark.unit
+class TestTheTeamsReplies:
+    """A person from the team answers in the dashboard while the end user is not
+    asking anything, so no chat turn can carry the reply: the SDK fetches it."""
+
+    def test_updates_returns_the_replies_and_the_handoff(self, client, magnus):
+        from mock_magnus import operator_message
+        magnus.handoff = True
+        magnus.operator_messages = [operator_message("Hola, soy del equipo")]
+        chat = client.conversation("magnus_standard", user="jane@company.com")
+
+        replies = chat.updates()
+
+        assert [r["content"] for r in replies] == ["Hola, soy del equipo"]
+        assert replies[0]["author"] == "human"
+        assert chat.handoff is True
+        request = magnus.requests[-1]
+        assert request["method"] == "GET"
+        assert "user=jane%40company.com" in request["path"]
+        assert "model=magnus_standard" in request["path"]
+
+    def test_a_second_call_brings_only_what_is_new(self, client, magnus):
+        from mock_magnus import operator_message
+        magnus.handoff = True
+        magnus.operator_messages = [operator_message("uno")]
+        chat = client.conversation("magnus_standard")
+        chat.updates()
+        first = chat.last_update_id
+        magnus.operator_messages.append(operator_message("dos"))
+
+        assert [r["content"] for r in chat.updates()] == ["dos"]
+        assert f"after={first}" in magnus.requests[-1]["path"]
+
+    def test_pages_are_followed_to_the_end(self, client, magnus):
+        from mock_magnus import operator_message
+        magnus.updates_page = 2
+        magnus.operator_messages = [operator_message(f"m{n}") for n in range(5)]
+        chat = client.conversation("magnus_standard")
+
+        assert [r["content"] for r in chat.updates()] == ["m0", "m1", "m2", "m3", "m4"]
+
+    def test_follow_yields_as_replies_arrive_and_ends_with_the_handoff(self, client, magnus):
+        from mock_magnus import operator_message
+        magnus.handoff = True
+        script = [["uno"], ["dos", "tres"], []]
+
+        def next_poll(state):
+            if script:
+                state.operator_messages.extend(operator_message(c) for c in script.pop(0))
+            else:
+                state.handoff = False
+
+        magnus.before_updates = next_poll
+        chat = client.conversation("magnus_standard")
+
+        assert [r["content"] for r in chat.follow(interval=0)] == ["uno", "dos", "tres"]
+        assert chat.handoff is False
+
+    def test_follow_returns_at_once_when_nobody_took_over(self, client, magnus):
+        chat = client.conversation("magnus_standard")
+
+        assert list(chat.follow(interval=0)) == []
+        assert len(magnus.requests) == 1
+
+    def test_a_stored_cursor_resumes_without_repeats(self, client, magnus):
+        from mock_magnus import operator_message
+        magnus.operator_messages = [operator_message("visto"), operator_message("nuevo")]
+        chat = client.conversation("magnus_standard")
+        chat.last_update_id = magnus.operator_messages[0]["id"]
+
+        assert [r["content"] for r in chat.updates()] == ["nuevo"]

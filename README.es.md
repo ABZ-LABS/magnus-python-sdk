@@ -160,10 +160,22 @@ lista está en [CONTRACT.es.md](CONTRACT.es.md#límites-que-responden-200).
 
 **Una persona puede tomar la conversación.** Cuando el agente deriva a alguien
 de tu equipo, o lo toman desde el panel, el agente deja de responder hasta que
-se la devuelvan. Cada turno sigue devolviendo 200 —primero el mensaje de
-derivación del agente, después un aviso fijo— y `chat.handoff` es `True`
-mientras una persona esté a cargo. Las respuestas del operador todavía no
-llegan por la API.
+el equipo se la devuelva. Cada turno sigue devolviendo 200 —primero el mensaje
+de derivación del agente, después un aviso fijo— y `chat.handoff` es `True`
+mientras una persona esté a cargo. Lo que escribe la persona no es la
+respuesta a ningún turno, así que este cliente lo trae —algo que un cliente de
+OpenAI no puede hacer—:
+
+```python
+reply = chat.send("Quiero hablar con alguien")
+if chat.handoff:
+    for message in chat.follow():      # consulta cada 5 s, termina cuando vuelve el agente
+        show(message["content"])        # author es siempre "human", nunca un nombre
+```
+
+`chat.updates()` devuelve lo nuevo sin esperar, para tu propio bucle. Para no
+mostrar una respuesta dos veces entre reinicios, guardá `chat.last_update_id`
+y volvé a ponerlo en la conversación nueva.
 
 **Un turno en streaming puede fallar después del HTTP 200.** Una vez que salió
 el primer fragmento, la línea de estado ya no se puede cambiar, así que el
@@ -301,7 +313,8 @@ agente, así que crea la key para un agente de prueba.
 | `chat(agent, messages, *, session_id, idempotency_key, user, extra_body)` | un turno completo |
 | `stream_chat(agent, messages, *, session_id, user, include_usage)` | un turno en streaming |
 | `send_message(agent, content, ...)` | entra texto, sale texto |
-| `conversation(agent, *, user, session_id)` | un hilo para un usuario final: `.send()`, `.stream()`, `.reset()`; después de cada turno `.last_trace_id`, `.last_usage_source` y `.handoff` |
+| `conversation(agent, *, user, session_id)` | un hilo para un usuario final: `.send()`, `.stream()`, `.reset()`; después de cada turno `.last_trace_id`, `.last_usage_source` y `.handoff`; las respuestas del equipo con `.updates()` y `.follow(interval=5)` |
+| `conversation_updates(agent, *, user, after)` | una página de respuestas del equipo, en crudo |
 
 `extra_body` reenvía campos del servidor más nuevos que esta biblioteca. Cada
 detalle del cable está en [CONTRACT.es.md](CONTRACT.es.md).

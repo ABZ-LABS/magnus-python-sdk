@@ -10,6 +10,7 @@ change CONTRACT.md first, then this file, and let the suite fail.
 import json
 import threading
 import uuid
+from urllib.parse import parse_qs, urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Dict, List, Optional
 
@@ -141,6 +142,9 @@ class _Handler(BaseHTTPRequestHandler):
                 "data": [_model_object(a) for a in self.state.agents],
             })
 
+        if self.path.startswith("/v1/conversations/updates"):
+            return self._conversation_updates()
+
         if self.path.startswith("/v1/models/"):
             model_id = self.path[len("/v1/models/"):]
             if model_id == "magnus" and "magnus_standard" in self.state.agents:
@@ -153,6 +157,29 @@ class _Handler(BaseHTTPRequestHandler):
             ))
 
         return self._send_json(404, _error("Not found."))
+
+    def _conversation_updates(self):
+        """The operator's replies after a cursor, and whether a person owns it."""
+        query = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}
+        if self.state.before_updates is not None:
+            self.state.before_updates(self.state)
+        messages = self.state.operator_messages
+        start = 0
+        if query.get("after"):
+            ids = [m["id"] for m in messages]
+            if query["after"] not in ids:
+                return self._send_json(400, _error(
+                    "after is not a message of this user.",
+                    param="after", code="invalid_cursor",
+                ))
+            start = ids.index(query["after"]) + 1
+        page = messages[start:start + self.state.updates_page]
+        return self._send_json(200, {
+            "object": "list",
+            "handoff": bool(self.state.handoff),
+            "data": page,
+            "has_more": start + len(page) < len(messages),
+        })
 
     # ------------------------------------------------------------------ POST
 
@@ -317,6 +344,11 @@ class MockMagnus:
         self.usage_source = "measured"
         # True stands for a conversation a person from the team has taken over.
         self.handoff = False
+        # What GET /v1/conversations/updates serves: the operator's replies,
+        # oldest first, and a hook a test uses to change state between polls.
+        self.operator_messages: List[Dict[str, Any]] = []
+        self.updates_page = 50
+        self.before_updates = None
         self.usage = {"prompt_tokens": 11, "completion_tokens": 7, "total_tokens": 18}
         self.rate_limit_remaining = 119
         self.rate_limit_reset = "2026-09-09T12:01:00+00:00"
@@ -422,3 +454,9 @@ def _tokenize(text: str) -> List[str]:
     """Split into the kind of pieces the server streams: words, spaces kept."""
     parts = text.split(" ")
     return [p if i == 0 else " " + p for i, p in enumerate(parts)]
+
+
+def operator_message(content: str, created: int = 1767225600) -> Dict[str, Any]:
+    """One reply a person from the team wrote, as the server serves it."""
+    return {"id": str(uuid.uuid4()), "object": "conversation.message",
+            "author": "human", "content": content, "created": created}

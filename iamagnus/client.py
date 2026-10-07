@@ -16,7 +16,8 @@ See CONTRACT.md for the wire format this client is written against.
 import random
 import time
 import uuid
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Union
+from urllib.parse import urlencode
 
 import requests
 
@@ -345,6 +346,29 @@ class MagnusClient:
         )
         return _first_text(response)
 
+    def conversation_updates(
+        self, agent_id: str, *, user: Optional[str] = None, after: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """One page of ``GET /v1/conversations/updates``.
+
+        The replies a person from the team wrote to ``user`` in the dashboard
+        after the message ``after`` (or within the last 24 hours), and
+        ``handoff``: whether a person owns the conversation now. A chat turn
+        cannot carry these — they are written while the end user is not asking
+        anything. Prefer :meth:`Conversation.updates` and
+        :meth:`Conversation.follow`, which keep the cursor.
+        """
+        effective_user = user if user is not None else self.user
+        params = {"model": agent_id}
+        if effective_user is not None:
+            params["user"] = effective_user
+        if after is not None:
+            params["after"] = after
+        response = self._request(
+            "GET", f"/v1/conversations/updates?{urlencode(params)}", retry=True,
+        )
+        return _safe_json(response) or {}
+
     def conversation(
         self, agent_id: str, *, user: Optional[str] = None,
         session_id: Optional[str] = None,
@@ -410,6 +434,10 @@ class Conversation:
         # True while a person from the team owns the conversation: the last
         # answer was the agent handing off, or a notice instead of the agent.
         self.handoff: bool = False
+        # The id of the last reply from the team that updates() returned. An
+        # app that must not show a reply twice across restarts stores it and
+        # sets it back on a new Conversation.
+        self.last_update_id: Optional[str] = None
 
     @property
     def agent_id(self) -> str:
@@ -449,6 +477,41 @@ class Conversation:
             include_usage=include_usage,
             on_finish=_finish,
         )
+
+    def updates(self) -> List[Dict[str, Any]]:
+        """The replies a person from the team wrote since the last call.
+
+        Each is ``{"id", "author": "human", "content", "created"}``, oldest
+        first; the operator is never named. Also refreshes :attr:`handoff`. The
+        first call, with no :attr:`last_update_id`, returns the last 24 hours.
+        """
+        messages: List[Dict[str, Any]] = []
+        while True:
+            page = self._client.conversation_updates(
+                self._agent_id, user=self._user, after=self.last_update_id,
+            )
+            data = page.get("data") or []
+            messages.extend(data)
+            if data:
+                self.last_update_id = data[-1].get("id") or self.last_update_id
+            self.handoff = page.get("handoff") is True
+            if not page.get("has_more") or not data:
+                return messages
+
+    def follow(self, *, interval: float = 5.0) -> Iterator[Dict[str, Any]]:
+        """Yield the team's replies as they arrive, while a person is in charge.
+
+        Polls :meth:`updates` every ``interval`` seconds and ends once the
+        conversation is back with the agent (:attr:`handoff` false) — so it
+        returns at once when nobody had taken over. Blocking: run it where a
+        wait is fine, or call :meth:`updates` from your own loop instead.
+        """
+        while True:
+            for message in self.updates():
+                yield message
+            if not self.handoff:
+                return
+            time.sleep(interval)
 
     def reset(self) -> None:
         """Forget the session id this object holds.

@@ -155,9 +155,21 @@ out of turns, the turn returns HTTP 200 with a sentence instead of an answer,
 
 **A person can take over.** When the agent hands a conversation to someone on
 your team, or they take it from the dashboard, the agent stops answering until
-it is handed back. Every turn still returns 200 — first the agent's hand-off
-message, then a fixed notice — and `chat.handoff` is `True` for as long as a
-person is in charge. The operator's own replies do not reach the API yet.
+the team hands it back. Every turn still returns 200 — first the agent's
+hand-off message, then a fixed notice — and `chat.handoff` is `True` for as
+long as a person is in charge. What the person writes is not the answer to any
+turn, so this client fetches it — something an OpenAI client cannot do:
+
+```python
+reply = chat.send("I want to talk to someone")
+if chat.handoff:
+    for message in chat.follow():      # polls every 5 s, ends when the agent is back
+        show(message["content"])        # author is always "human", never a name
+```
+
+`chat.updates()` returns what is new without waiting, for your own loop. To
+avoid showing a reply twice across restarts, store `chat.last_update_id` and
+set it back on the new conversation.
 
 **A streamed turn can fail after HTTP 200.** Once the first chunk is out the
 status line cannot be taken back, so a failure arrives *inside* the stream. This
@@ -291,7 +303,8 @@ key for a test agent.
 | `chat(agent, messages, *, session_id, idempotency_key, user, extra_body)` | one buffered turn |
 | `stream_chat(agent, messages, *, session_id, user, include_usage)` | one streamed turn |
 | `send_message(agent, content, ...)` | text in, text out |
-| `conversation(agent, *, user, session_id)` | a thread for one end user: `.send()`, `.stream()`, `.reset()`; after each turn `.last_trace_id`, `.last_usage_source` and `.handoff` |
+| `conversation(agent, *, user, session_id)` | a thread for one end user: `.send()`, `.stream()`, `.reset()`; after each turn `.last_trace_id`, `.last_usage_source` and `.handoff`; the team's replies with `.updates()` and `.follow(interval=5)` |
+| `conversation_updates(agent, *, user, after)` | one page of the team's replies, raw |
 
 `extra_body` forwards server fields newer than this library. Every wire detail
 is in [CONTRACT.md](CONTRACT.md).
