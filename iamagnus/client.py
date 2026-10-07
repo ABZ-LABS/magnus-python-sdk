@@ -407,6 +407,9 @@ class Conversation:
         self.last_turn_id: Optional[str] = None
         self.last_usage: Optional[Dict[str, int]] = None
         self.last_usage_source: Optional[str] = None
+        # True while a person from the team owns the conversation: the last
+        # answer was the agent handing off, or a notice instead of the agent.
+        self.handoff: bool = False
 
     @property
     def agent_id(self) -> str:
@@ -472,6 +475,8 @@ class Conversation:
         self.last_trace_id = magnus.get("trace_id")
         self.last_turn_id = magnus.get("turn_id")
         self.last_usage_source = magnus.get("usage_source")
+        # A server older than the field omits it: that is not a handoff.
+        self.handoff = magnus.get("handoff") is True
         if isinstance(usage, dict):
             self.last_usage = usage
 

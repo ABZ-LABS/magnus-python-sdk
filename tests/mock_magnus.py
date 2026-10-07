@@ -249,6 +249,8 @@ class _Handler(BaseHTTPRequestHandler):
                 "trace_id": self.state.trace_id,
                 "turn_id": self.state.turn_id,
                 "usage_source": self.state.usage_source,
+                # None stands for a server older than the field: it is omitted.
+                **({} if self.state.handoff is None else {"handoff": self.state.handoff}),
             },
         }
         usage = dict(self.state.usage)
@@ -313,6 +315,8 @@ class MockMagnus:
         self.trace_id = "trace-1"
         self.turn_id = "turn-1"
         self.usage_source = "measured"
+        # True stands for a conversation a person from the team has taken over.
+        self.handoff = False
         self.usage = {"prompt_tokens": 11, "completion_tokens": 7, "total_tokens": 18}
         self.rate_limit_remaining = 119
         self.rate_limit_reset = "2026-09-09T12:01:00+00:00"

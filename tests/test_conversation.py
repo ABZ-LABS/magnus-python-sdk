@@ -92,3 +92,39 @@ class TestConversationStreaming:
         with pytest.raises(StreamError):
             list(chat.stream("Y esto"))
         assert chat.session_id == known
+
+
+@pytest.mark.unit
+class TestHandoff:
+    """A person from the team can take a conversation over from the agent.
+
+    The server keeps answering 200 — the turn where the agent hands off, then a
+    fixed notice — so without the flag a caller cannot tell a person is in charge.
+    """
+
+    def test_a_conversation_starts_with_the_agent(self, client, magnus):
+        chat = client.conversation("magnus_standard")
+        chat.send("Hola")
+        assert chat.handoff is False
+
+    def test_the_flag_follows_the_server_turn_by_turn(self, client, magnus):
+        chat = client.conversation("magnus_standard")
+        magnus.handoff = True
+        chat.send("Quiero hablar con una persona")
+        assert chat.handoff is True
+        magnus.handoff = False
+        chat.send("Hola de nuevo")
+        assert chat.handoff is False
+
+    def test_a_streamed_turn_reports_it_too(self, client, magnus):
+        magnus.handoff = True
+        chat = client.conversation("magnus_standard")
+        stream = chat.stream("Hola")
+        "".join(stream)
+        assert chat.handoff is True
+
+    def test_a_server_without_the_field_is_not_a_handoff(self, client, magnus):
+        magnus.handoff = None
+        chat = client.conversation("magnus_standard")
+        chat.send("Hola")
+        assert chat.handoff is False
