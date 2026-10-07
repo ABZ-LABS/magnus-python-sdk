@@ -142,7 +142,7 @@ class _Handler(BaseHTTPRequestHandler):
                 "data": [_model_object(a) for a in self.state.agents],
             })
 
-        if self.path.startswith("/v1/conversations/updates"):
+        if self.path.startswith("/v1/conversations/updates") and self.state.serves_updates:
             return self._conversation_updates()
 
         if self.path.startswith("/v1/models/"):
@@ -349,6 +349,8 @@ class MockMagnus:
         self.operator_messages: List[Dict[str, Any]] = []
         self.updates_page = 50
         self.before_updates = None
+        # False stands for a server older than the endpoint: it answers 404.
+        self.serves_updates = True
         self.usage = {"prompt_tokens": 11, "completion_tokens": 7, "total_tokens": 18}
         self.rate_limit_remaining = 119
         self.rate_limit_reset = "2026-09-09T12:01:00+00:00"

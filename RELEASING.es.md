@@ -19,12 +19,12 @@ publishing*): en este repositorio no vive ningún token.
 
 1. Pon la misma versión en `pyproject.toml` y en `iamagnus/__init__.py`.
 2. Corre `magnus-livecheck` contra la API de producción con un agente de prueba.
-   Tienen que pasar los catorce chequeos.
+   Tienen que pasar los quince chequeos.
 3. Haz el commit, crea el tag y súbelo:
 
    ```bash
-   git tag v0.1.0
-   git push origin main v0.1.0
+   git tag v0.2.0
+   git push origin main v0.2.0
    ```
 
 El workflow rechaza un tag que no coincida con las dos cadenas de versión, corre

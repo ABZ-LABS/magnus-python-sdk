@@ -37,7 +37,7 @@ es el mismo y el import también: `from iamagnus import MagnusClient`.
 repositorio. Necesita `git` en la máquina:
 
 ```bash
-pip install "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0"
+pip install "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.2.0"
 ```
 
 La misma línea sirve en `requirements.txt`, y otras herramientas aceptan la
@@ -45,12 +45,12 @@ misma URL:
 
 ```text
 # requirements.txt
-iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0
+iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.2.0
 ```
 
 ```bash
-uv add "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.1.0"
-poetry add "git+https://github.com/ABZ-LABS/magnus-python-sdk.git#v0.1.0"
+uv add "iamagnus @ git+https://github.com/ABZ-LABS/magnus-python-sdk@v0.2.0"
+poetry add "git+https://github.com/ABZ-LABS/magnus-python-sdk.git#v0.2.0"
 ```
 
 Fija un tag, como arriba, para que cada build instale el mismo código. `@main`
@@ -61,11 +61,11 @@ un wheel una vez en una máquina con acceso y entrega el archivo junto con el
 proyecto:
 
 ```bash
-git clone --branch v0.1.0 https://github.com/ABZ-LABS/magnus-python-sdk
+git clone --branch v0.2.0 https://github.com/ABZ-LABS/magnus-python-sdk
 pip wheel ./magnus-python-sdk --no-deps -w vendor/
-# vendor/iamagnus-0.1.0-py3-none-any.whl va dentro del proyecto
+# vendor/iamagnus-0.2.0-py3-none-any.whl va dentro del proyecto
 
-pip install vendor/iamagnus-0.1.0-py3-none-any.whl
+pip install vendor/iamagnus-0.2.0-py3-none-any.whl
 ```
 
 El wheel no incluye `requests`, que sigue viniendo de tu índice de paquetes. Si
@@ -288,7 +288,7 @@ una key nueva o rotada hace empezar de cero a cada persona.
 
 ## Verificar un despliegue
 
-`magnus-livecheck` corre los catorce chequeos de [CONTRACT.es.md](CONTRACT.es.md)
+`magnus-livecheck` corre los quince chequeos de [CONTRACT.es.md](CONTRACT.es.md)
 contra un despliegue real y sale con un código distinto de cero salvo que pasen
 todos:
 

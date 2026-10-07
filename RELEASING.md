@@ -19,12 +19,12 @@ this repository.
 
 1. Set the same version in `pyproject.toml` and in `iamagnus/__init__.py`.
 2. Run `magnus-livecheck` against the production API with a test agent. All
-   fourteen checks must pass.
+   fifteen checks must pass.
 3. Commit, then tag and push:
 
    ```bash
-   git tag v0.1.0
-   git push origin main v0.1.0
+   git tag v0.2.0
+   git push origin main v0.2.0
    ```
 
 The workflow refuses a tag that does not match both version strings, runs the

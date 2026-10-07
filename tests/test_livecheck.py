@@ -14,13 +14,13 @@ class TestLivecheck:
         code = main(["--base-url", magnus.url, "--api-key", "k", "--no-color"])
         out = capsys.readouterr().out
         assert code == 0, out
-        assert "all 14 checks passed" in out
+        assert "all 15 checks passed" in out
         assert "FAIL" not in out
 
     def test_every_check_actually_runs(self, magnus, capsys):
         main(["--base-url", magnus.url, "--api-key", "k", "--no-color"])
         out = capsys.readouterr().out
-        for number in range(1, 15):
+        for number in range(1, 16):
             assert f"{number:>2}. " in out, f"check {number} never ran"
 
     def test_a_bad_key_fails_the_gate(self, magnus, capsys):
@@ -66,3 +66,14 @@ class TestLivecheck:
     def test_missing_credentials_is_a_usage_error(self, capsys):
         with pytest.raises(SystemExit):
             main([])
+
+
+@pytest.mark.unit
+def test_a_server_without_the_updates_endpoint_fails_the_gate(magnus, capsys):
+    """Releasing updates()/follow() against a server that 404s it would break
+    every user of the release: check 15 is what stops it."""
+    magnus.serves_updates = False
+    code = main(["--base-url", magnus.url, "--api-key", "k", "--no-color"])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "15. " in out and "FAIL" in out

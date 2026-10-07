@@ -17,7 +17,7 @@
 Authentication is a System API Key or User API Key from the Magnus dashboard, sent
 as `Authorization: Bearer <key>` (or `X-API-Key` via `auth_scheme`).
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .client import Conversation, MagnusClient
 from ._stream import ChatStream

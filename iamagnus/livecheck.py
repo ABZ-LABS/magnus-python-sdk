@@ -28,7 +28,7 @@ class Check:
 
 
 def build_checks(client: MagnusClient, agent_id: Optional[str], prompt: str) -> Tuple[List[Check], dict]:
-    """The fourteen checks, sharing a scratch dict so later ones reuse earlier results."""
+    """The fifteen checks, sharing a scratch dict so later ones reuse earlier results."""
     state: dict = {"agent_id": agent_id}
 
     def c1_health():
@@ -162,6 +162,14 @@ def build_checks(client: MagnusClient, agent_id: Optional[str], prompt: str) -> 
         state["budget"] = client.rate_limit_remaining
         return None
 
+    def c15_updates():
+        # A server older than the endpoint answers 404, and the SDK's
+        # updates()/follow() would fail for every user of this release.
+        page = client.conversation_updates(state["agent_id"], user=f"livecheck-{uuid.uuid4()}")
+        if not isinstance(page.get("data"), list) or not isinstance(page.get("handoff"), bool):
+            return "GET /v1/conversations/updates did not answer a page with `data` and `handoff`"
+        return None
+
     checks = [
         Check(1, "health probe answers", c1_health),
         Check(2, "the key can list agents", c2_list),
@@ -177,6 +185,7 @@ def build_checks(client: MagnusClient, agent_id: Optional[str], prompt: str) -> 
         Check(12, "a non-UUID session_id is refused locally", c12_bad_session),
         Check(13, "one idempotency key runs one turn", c13_idempotency),
         Check(14, "the rate-limit budget is observable", c14_budget),
+        Check(15, "the team's replies can be fetched", c15_updates),
     ]
     return checks, state
 
